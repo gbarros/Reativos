@@ -96,6 +96,8 @@ void loop() {
 }
 /******* USER CODE  Tarefa02*********/
 
+#if 1
+
 void user_init(void){
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
@@ -108,7 +110,7 @@ void button_changed(int pin, int v){
     timer = millis();
     last = pin;
   }
-  if(pin != last && (millis() - timer) > 500){
+  if(pin != last && (millis() - timer) < 500){
     blink_speed = 0;
     last = pin;
     return;
@@ -133,19 +135,19 @@ void timer_expired(void){
 }
 
 /******* USER CODE  Tarefa02*********/
-
+#else
 /******* USER CODE  Hello World*********/
-// void user_init(void){
-//   pinMode(LED_PIN, OUTPUT);
-//   digitalWrite(LED_PIN, HIGH);
-//   button_listen(BUT_PIN1);
-// }
-// void button_changed(int pin, int v){
-//   //Serial.println("Changed")
-//   digitalWrite(LED_PIN, v);
-// }
-// void timer_expired(void){
+void user_init(void){
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, HIGH);
+  button_listen(BUT_PIN1);
+}
+void button_changed(int pin, int v){
+  //Serial.println("Changed")
+  digitalWrite(LED_PIN, v);
+}
+void timer_expired(void){
 
-// }
+}
 /******* USER CODE  Hello World*********/
-
+#endif
