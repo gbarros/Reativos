@@ -24,10 +24,13 @@ var _SDL_Renderer&? renderer;
         _SDL_DestroyRenderer(&&renderer!);
     end
 
+
 class Player with
     var _SDL_Renderer& ren;
     var _SDL_Rect r;
+    var int points;
     event void been_hit;
+    event void get_stars;
 do
     var int x = (640/2 - 20/2) * 1000;
     var int y = (480-50) * 1000;
@@ -69,7 +72,50 @@ do
         end
     with
         await been_hit;
+    with
+	loop do
+        	await get_stars;
+		points = points +1;
+	end
     end
+end
+
+class Stars with
+    var _SDL_Renderer&  ren;
+    var _SDL_Rect       r;
+    var int             speed;
+    var Player&         p;
+
+    event void hit_ground;
+    event void hit_something;
+do
+    var int y = this.r.y * 1000;
+    par/or do
+        par/or do
+            every dt in SDL_DT do
+                y = y + dt* this.speed;
+                if y > 480000 then
+                    emit hit_ground;
+                else/if _SDL_HasIntersection(&&this.r,&&p.r) then
+                    emit p.get_stars;
+                    emit hit_something;
+                end
+            end
+        with
+            await this.hit_ground;
+		with
+            await this.hit_something;
+        end
+
+    with
+        every SDL_REDRAW do
+            _SDL_SetRenderDrawColor(&&this.ren,
+                                        0,0,0xFF,0x55);
+            this.r.y = y / 1000;
+            _SDL_RenderFillRect(&&this.ren, &&this.r);
+        end
+    end  
+
 end
 
 
@@ -96,6 +142,8 @@ do
             end
         with
             await this.hit_ground;
+		with
+            await this.hit_something;
         end
 
     with
@@ -143,6 +191,26 @@ do
             end
 
         end
+	with
+        pool Stars[] stars;
+        every 500ms do
+            var int do_spawn = _rand()%10;
+
+            if do_spawn%2 == 0 then
+                spawn Stars in stars with
+                    var int w = 4;
+                    var int h = 4;
+                    var int y = r.y;
+                    var int x2 = r.x;
+                    this.p = &p;
+                    this.ren = &ren;
+
+                    this.r   = _SDL_Rect(x2,200,w,h);
+                    this.speed = 30 + _rand()%50;;
+                end;
+            end
+
+        end
     with
         every SDL_REDRAW do
             _SDL_SetRenderDrawColor(&&this.ren,
@@ -167,6 +235,7 @@ with
 with
     var Player p with
         this.ren = &renderer!;
+		this.points = 0;
         this.r = _SDL_Rect(0,0, 20,50);
     end;
     var Cloud[3] _ with
@@ -180,6 +249,7 @@ with
     end;
 
     await p.been_hit;
+    _printf("Score %d\n", p.points);
 with
     every SDL_REDRAW do
         _SDL_RenderPresent(&&renderer!);
